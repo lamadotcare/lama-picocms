@@ -1,0 +1,26 @@
+version: "3"
+services:
+  picocms:
+    restart: always
+    build:
+      context: picocms
+      args:
+        TIMEZONE: "US/Eastern"
+    image: picocms
+    ports:
+      - 80:80
+    volumes:
+      - www:/usr/share/nginx/html
+  gitup2date:
+    restart: always
+    image: picocms
+    command: /gitup2date.sh
+    depends_on:
+      - picocms
+    environment:
+      PICO_COMPOSER_REPO: https://github.com/lamadotcare/pico-composer.git
+      GITUP2DATE_SLEEP: 60
+    volumes:
+      - www:/usr/share/nginx/html
+volumes:
+  www:

@@ -1,9 +1,7 @@
 FROM nginx:alpine
 
 # envs
-ENV TIMEZONE="US/Eastern" \
-    NGINX_SERVER_NAME="lama.care" \
-    PHP_FPM_USER="nginx" \
+ENV PHP_FPM_USER="nginx" \
     PHP_FPM_GROUP="nginx" \
     PHP_FPM_LISTEN_MODE="0660" \
     PHP_MEMORY_LIMIT="512M" \
@@ -14,6 +12,7 @@ ENV TIMEZONE="US/Eastern" \
     PHP_DISPLAY_STARTUP_ERRORS="On" \
     PHP_ERROR_REPORTING="E_COMPILE_ERROR\|E_RECOVERABLE_ERROR\|E_ERROR\|E_CORE_ERROR" \
     PHP_CGI_FIX_PATHINFO=0
+ARG TIMEZONE
 
 # System
 RUN apk update \
@@ -23,11 +22,9 @@ RUN apk update \
     && echo "${TIMEZONE}" > /etc/timezone
 
 # Packages
-RUN apk add --no-cache python3 python3-dev build-base libressl-dev musl-dev \
-                       libffi-dev curl php openssl vim
-RUN apk add --no-cache php7-fpm py3-pip php7-json php7-phar php7-iconv php7-openssl \
+RUN apk add --no-cache build-base libressl-dev musl-dev libffi-dev curl php openssl git
+RUN apk add --no-cache php7-fpm php7-json php7-phar php7-iconv php7-openssl \
                        php7-mbstring php7-dom
-RUN pip3 install pip --upgrade
 
 # PHP
 RUN sed -i "s|;listen.owner\s*=\s*nobody|listen.owner = ${PHP_FPM_USER}|g" /etc/php7/php-fpm.d/www.conf; \
@@ -46,18 +43,8 @@ RUN sed -i "s|;listen.owner\s*=\s*nobody|listen.owner = ${PHP_FPM_USER}|g" /etc/
     sed -i "s|;*cgi.fix_pathinfo=.*|cgi.fix_pathinfo= ${PHP_CGI_FIX_PATHINFO}|i" /etc/php7/php.ini; \
     sed -i "s|;*date.timezone =.*|date.timezone = ${TIMEZONE}|i" /etc/php7/php.ini
 
-
 # Pico CMS
-RUN cd /usr/share/nginx/html \
-    && curl -sSL https://getcomposer.org/installer | php \
-    && php composer.phar create-project picocms/pico-composer pico
-
-# Cron
-# Not implemented
-
-# Certbot
-#RUN pip3 install certbot-nginx
-#RUN mkdir /etc/letsencrypt
+# Handled by gitup2date service
 
 # Nginx
 # All static files
@@ -66,4 +53,6 @@ RUN cd /usr/share/nginx/html \
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY default.conf /etc/nginx/conf.d/default.conf
 COPY 30-start-php7-fpm.sh /docker-entrypoint.d/30-start-php7-fpm.sh
+COPY gitup2date.sh /gitup2date.sh
 RUN chmod +x /docker-entrypoint.d/30-start-php7-fpm.sh
+RUN chmod +x /gitup2date.sh
