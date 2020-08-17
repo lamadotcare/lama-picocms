@@ -19,7 +19,7 @@ services:
       - picocms
     environment:
       PICO_COMPOSER_REPO: https://github.com/lamadotcare/pico-composer.git
-      GITUP2DATE_SLEEP: 60
+      GITUP2DATE_SLEEP: 900
     volumes:
       - www:/usr/share/nginx/html
 volumes:
