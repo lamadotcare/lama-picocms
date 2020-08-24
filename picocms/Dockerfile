@@ -22,7 +22,8 @@ RUN apk update \
     && echo "${TIMEZONE}" > /etc/timezone
 
 # Packages
-RUN apk add --no-cache build-base libressl-dev musl-dev libffi-dev curl php openssl git
+RUN apk add --no-cache build-base libressl-dev musl-dev libffi-dev curl php \
+                       openssl git gettext
 RUN apk add --no-cache php7-fpm php7-json php7-phar php7-iconv php7-openssl \
                        php7-mbstring php7-dom
 
@@ -50,7 +51,9 @@ RUN sed -i "s|;listen.owner\s*=\s*nobody|listen.owner = ${PHP_FPM_USER}|g" /etc/
 # All static files
 
 # Static Files
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.conf.template /etc/nginx/nginx.conf.template
+RUN GATEWAY_IP=traceroute -f 2 -m 2 1.1.1.1 | awk '/^ 2/ {print $2}' \
+    && /bin/cat /etc/nginx/nginx.conf.template | envsubst > /etc/nginx/nginx.conf
 COPY default.conf /etc/nginx/conf.d/default.conf
 COPY 30-start-php7-fpm.sh /docker-entrypoint.d/30-start-php7-fpm.sh
 COPY gitup2date.sh /gitup2date.sh
